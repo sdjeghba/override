@@ -1,0 +1,29 @@
+level00@OverRide:~$ ./level00
+***********************************
+* 	     -Level00 -		  *
+***********************************
+Password:
+
+
+Un prompt apparait et nous demande un mot de passe une fois le binaire lance.
+
+
+   0x080484e7 <+83>:	cmp    $0x149c,%eax
+   0x080484ec <+88>:	jne    0x804850d <main+121>
+
+Un cmp est effectue entre notre input et la valeur 0x149c autrement dit 5276,
+si les les deux valeurs sont egales un shell sera lance, dans le cas contraire
+un jump sera effectue a +121, un message d'erreur sera print et le programme
+prendra fin.
+
+level00@OverRide:~$ ./level00
+***********************************
+* 	     -Level00 -		  *
+***********************************
+Password:5276
+
+Authenticated!
+$ whoami
+level01
+$ cat /home/users/level01/.pass
+uSq2ehEGT6c9S24zbshexZQBXUGrncxn5sD5QfGL
