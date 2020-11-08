@@ -29,7 +29,7 @@ Que fait <test> ?
     - CONST - INPUT = DELTA
     - Si DELTA > 21 :
       Un jump est effectué, on récupère un nombre aléatoire avec rand(), qui est ensuite utilisé en paramètre pour <decrypt>
-    - Si DELTA < 21 : 
+    - Si DELTA <= 21 : 
       Traitement de DELTA afin de déterminer la destination de jmp
       ------------------------------------------------------------
       eax = DELTA           
@@ -90,7 +90,8 @@ En joignant nos deux tableaux :
 
         322424827 => 18 => Congratulations! => system("\bin\sh")
   
-On a donc notre solution, l'input doit être égale à 322424827 afin de pouvoir que le décryptage de "Q}|u`sfg~sf{}|a3" s'effectue avec un xor de 18. Pour obtenir 
+On a donc notre solution, l'input doit être égale à 322424827 afin que le
+décryptage de "Q}|u`sfg~sf{}|a3" s'effectue avec un xor de 18. Et ainsi obtenir 
 l'accès au shell "\bin\sh".
 
 Next ...
