@@ -41,7 +41,7 @@ Que fait <test> ?
       
       # Dressons un tableau des INPUT qui nous permettent d'obtenir un DELTA <= 21 :
       
-      # python -c 'for i in range(22):x = 0x1337d00d - i; print("%d => %d" % (x,i));'
+      >$ level03@OverRide:~$ python -c 'for i in range(22):x = 0x1337d00d - i; print("%d => %d" % (x,i));'
         
         322424845 => 0
         322424844 => 1
@@ -66,6 +66,8 @@ Que fait <decrypt> ?
     # Quel DELTA nous permettrait donc d'obtenir "Congratulations!" via un xor sur "Q}|u`sfg~sf{}|a3" ?
 
     # Dans l'invité de commande python :
+        
+    >$ level03@OverRide:~$ python
     
             >>> for i in range(22):
         ...     str = ""
