@@ -1,0 +1,9 @@
+int		main(void)
+{
+	char buffer[100];
+
+	fgets(&buffer, 100, STDIN);
+	strtolower(&buffer);
+	printf(&buffer);
+	exit(0);
+}
