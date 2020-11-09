@@ -1,3 +1,11 @@
+    __               ______ ___
+   / /__ _   _____  / / __ <  /
+  / / _ \ | / / _ \/ / / / / / 
+ / /  __/ |/ /  __/ / /_/ / /  
+/_/\___/|___/\___/_/\____/_/   
+                               
+                               
+                               
 Au lancement du binaire un prompt apparait et nous demande un Username.
 
 La fonction verify_username comme son nom l'indique effectue une comparaison
