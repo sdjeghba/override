@@ -35,8 +35,11 @@ Exploit :
 "By default, when a program forks, GDB will continue to debug the parent process and the child process will run unimpeded. If you want to follow the child 
  process instead of the parent process, use the command set follow-fork-mode"
  
- Nous allons utiliser "set follow-fork-mode child" dans puis "https://wiremask.eu/tools/buffer-overflow-pattern-generator/?" pour determiner l'offset. Ainsi, on
- trouve un offset de 156.
+ En effet l'appel à gets() est effectué dans le process CHILD. Pour determiner l'offset, nous allons utiliser :
+    - set follow-fork-mode child 
+    - https://wiremask.eu/tools/buffer-overflow-pattern-generator/? 
+    
+ Ainsi, on trouve un offset de 156.
  
  Procédons à la réalisation d'un return2libc :
  
@@ -54,9 +57,4 @@ Exploit :
  
 
 Next ...
- 
- 
- 
- 
- 
- 
+
