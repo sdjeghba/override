@@ -1,0 +1,63 @@
+Nous lancons le binaire, il nous affiche un prompt nous demandant un login
+puis un serial.
+
+disas..
+
+   0x08048941 <+200>:	call   0x8048748 <auth>
+   0x08048946 <+205>:	test   %eax,%eax
+   0x08048948 <+207>:	jne    0x8048969 <main+240>
+   0x0804894a <+209>:	movl   $0x8048b52,(%esp)
+   0x08048951 <+216>:	call   0x8048590 <puts@plt>
+   0x08048956 <+221>:	movl   $0x8048b61,(%esp)
+   0x0804895d <+228>:	call   0x80485a0 <system@plt>
+
+un shell est lance si le retour de notre fonction vaut 0. Good nous allons nous
+pencher sur la fonction auth.
+
+La fonction auth nous retournerons 0 si nous arrivont a <+298>
+   0x08048872 <+298>:	mov    $0x0,%eax
+   0x08048877 <+303>:	leave
+   0x08048878 <+304>:	ret
+
+et pour cela il faut passe la comparaison quelques lignes plus haut entre notre
+input qui est d'ailleurs un unsigned int et une autre donnee soit vraie.
+
+   0x08048863 <+283>:	mov    0xc(%ebp),%eax
+=> 0x08048866 <+286>:	cmp    -0x10(%ebp),%eax
+   0x08048869 <+289>:	je     0x8048872 <auth+298>
+
+Ptrace nous empechant d'aller jusque la, pour contourner cela on break juste
+apres l'appel a ptrace, puis on modifie la valeur du retour et la set a 0.
+
+Breakpoint 1, 0x080487ba in auth ()
+(gdb) set $eax=0
+(gdb) c
+Continuing.
+
+
+Nous affichons ensuite la valeur qui est comparee a notre input
+
+Breakpoint 2, 0x08048866 in auth ()
+(gdb) x $ebp-0x10
+0xffffd658:	0x005f218f
+(gdb) p/d 0x005f218f
+$1 = 6234511
+
+Nous n'avons plus qu'a relancer le programme et le tester avec le nombre obtenu
+
+level06@OverRide:~$ ./level06
+***********************************
+*		level06		  *
+***********************************
+-> Enter Login: override
+***********************************
+***** NEW ACCOUNT DETECTED ********
+***********************************
+-> Enter Serial: 6234511
+Authenticated!
+$ whoami
+level07
+$ cat /home/users/level07/.pass
+GbcPDRgsFK77LNnnuh7QyFYA2942Gp8yKj9KrWD8
+
+Next level..
