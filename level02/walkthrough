@@ -34,7 +34,7 @@ On constate la présence du <main>. Etudions l'activitée de ce dernier :
     - puis strcspn() recherche "\n" dans str_1 afin de le remplacer par un "\0". 
   
   
-  4) COPIE DU 1ER INPUT PASSWORD DANS str_3
+  4) COPIE DU 2EME INPUT PASSWORD DANS str_3
     
     - On peut voir que fgets() copie jusqu'a 100 caractère de notre username dans str_3, 
     - puis strcspn() recherche "\n" dans str_3 afin de le remplacer par un "\0".
@@ -63,7 +63,7 @@ On constate la présence du <main>. Etudions l'activitée de ce dernier :
                             
             [rsp]             ----|     HAUT STACK      |------
                               ----|     SF printf()     |------
-            [-0xa0(rbp)]      ----|   PASSWORD / str_1  |------
+            [-0x110(rbp)]     ----|   PASSWORD / str_1  |------
             [-0xa0(rbp)]      ----|    .PASS / str_2    |------
             [-0x70(rbp)]      ----|   USERNAME / str_3  |------
                               ----|                     |------ 
