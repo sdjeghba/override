@@ -56,9 +56,10 @@ Nous avons aussi l'adresse de notre tableau en ebp + 0x8 qui est 0xffffd504
 Good, nous allons maintenant devoir trouver l'EIP, calculer l'offset et reecrire
 cet EIP.
 
-<read_number> prend en parametre le tableau, pour le verifier il nous suffit
-de break juste avant l'appel a la fonction et d'afficher la stack et nous verifierons
-par la meme occasion que l'adresse de notre tableau est bien la bonne.
+<read_number> prend en parametre le tableau, il nous ai possible de recuperer
+l'adresse de notre tableau ici aussi, il nous suffit de break juste avant
+l'appel a la fonction et d'afficher la stack et de verifier que nous avions bien
+recuperer la bonne adreesse..
 
 (gdb) x/4wx $esp
 0xffffd4e0:	0xffffd504	0x00000014	0xf7fcfac0	0xf7fdc714
