@@ -1,0 +1,41 @@
+int		auth(char *login, int serial)
+{
+	login[strcspn(login, "\n")] = '\0';
+	len = strnlen(login, 32);
+	int hash = 0;
+	if (len <= 5)
+		return (1);
+	if (ptrace(0, 0 ,1 , NULL) == 1) {
+		puts("\033[32m.---------------------------.");
+        puts("\033[31m| !! TAMPERING DETECTED !!  |");
+        puts("\033[32m'---------------------------'");
+        return (1);
+	}
+	hash = /* algorithm that hash the password */
+	if (serial != hash)
+		return(1);
+	return (0);
+}
+
+int		main(void)
+{
+	char	buffer[32];
+	unsigned int serial;
+
+	puts("***********************************");
+	puts("*\t\tlevel06\t\t  *");
+	puts("***********************************");
+	printf("-> Enter Login: ");
+	fgets(buf, 32, stdin);
+	puts("***********************************");
+	puts("***** NEW ACCOUNT DETECTED ********");
+	puts("***********************************");
+	printf("-> Enter Serial: ");
+	scanf("%u", &serial);
+	if (auth(buffer, serial) == 0) {
+		puts("Authenticated");
+		system("/bin/sh");
+		return (0);
+	}
+	return (1);
+}
