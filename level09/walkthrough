@@ -1,0 +1,49 @@
+    __               ______  ____ 
+   / /__ _   _____  / / __ \/ __ \
+  / / _ \ | / / _ \/ / / / / /_/ /
+ / /  __/ |/ /  __/ / /_/ /\__, / 
+/_/\___/|___/\___/_/\____//____/  
+                                  
+                                  
+>$ objdump -d level09
+
+On observe plusieurs fonctions :
+  - <set_msg>
+  - <set_username>
+  - <handle_msg>
+  - <secret_backdoor>
+  - <main>
+  
+En redirigeant le flow d'éxecution vers <secret_backdoor> on peut ouvrir un shell (en donnant "\bin\sh" en paramètre à <secret_backdoor>).
+
+Comment faire cela ?
+
+Que fait <handle_msg> ?
+
+  Passe en paramètre à <set_username> et <set_msg> ce qui semble être une structure :
+
+  struct s_message {
+      char buffer_msg[140];  
+      char buffer_username[40];  
+      int len_msg;   
+  };
+
+Que fait <set_username> ?
+
+  Recupère un input via fgets() puis le copie via une boucle dans buffer_username
+  EXPLOIT : Mais la boucle s'incrèmente une fois de plus ce qui nous permet de réécrire len_msg et par consèquent 
+
+Que fait <set_msg> ?
+
+  Recupère un input via fgets() puis le copie via strncpy() dans buffer_msg
+  EXPLOIT : Mais si len_msg est modifié on peut alors copier jusqu'à X caractères dans buffer_msg 
+  
+
+EXPLOIT :
+
+  1) Réécrire len_msg avec "\xff"
+  2) Déterminer l'offset dans <handle_msg>
+  3) Réécrire l'eip <handle_msg> avec l'adresse de <secret_backdoor>
+
+
+
