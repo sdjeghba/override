@@ -29,6 +29,11 @@ input qui est d'ailleurs un unsigned int et une autre donnee soit vraie.
 Ptrace nous empechant d'aller jusque la, pour contourner cela on break juste
 apres l'appel a ptrace, puis on modifie la valeur du retour et la set a 0.
 
+"GDB controls the program that we are debugging (the inferior) through a system call named ptrace(). It lets GDB observe and control the execution 
+of the inferior program. If the inferior programm by try to set a debugging request to itself. If the program is being debugged by gdb, 
+this call to ptrace() fails, as there can only be one debugger. The failure of the call indicates the program it is being debugged."
+
+
 Breakpoint 1, 0x080487ba in auth ()
 (gdb) set $eax=0
 (gdb) c
