@@ -1,0 +1,85 @@
+void	clear_stdin(void)
+{
+	char c = 0;
+	while (1) {
+		c = getchar();
+		if (c == '\n' || c == EOF)
+			return;
+	}
+}
+
+int		get_unum(void)
+{
+	unsigned int input;
+
+	fflush(stdout);
+	scanf("%u", &input);
+	clear_stdin();
+	return(input);
+}
+
+int		read_number(unsigned int *tab) {
+	unsigned int index = 0;
+
+	printf("Index: ");
+	index = get_unum();
+	printf("Number at data[%u] is %u\n", tab[index]);
+	return(0);
+}
+
+int		store_number(unsigned int *tab) {
+	unsigned int input = 0;
+	unsigned int index = 0;
+
+	printf("Number: ");
+	input = get_unum();
+	printf("Index: ");
+	index = get_unum();
+	if(index % 3 == 0 || (input >> 0x18) == 0xb7) {
+		printf(" *** ERROR! ***\n");
+        printf("   This index is reserved for wil!\n");
+        printf(" *** ERROR! ***\n");
+		return(1);
+	}
+	tab[index] = input;
+	return(0);
+}
+
+int		main(int ac, char **av, char **env)
+{
+	int ret = 0;
+	char buffer[20];
+	unsigned int tab[100] = 0;
+
+	while(*av){
+		memset(*av, 0, strlen(*av));
+		av++;
+	}
+	while(*env) {
+		memset(*env, 0, strlen(*env));
+		env++;
+	}
+	puts("----------------------------------------------------\n\
+		    Welcome to wil's crappy number storage service!   \n\
+          ----------------------------------------------------\n\
+           Commands:                                          \n\
+              store - store a number into the data storage    \n\
+              read  - read a number from the data storage     \n\
+              quit  - exit the program                        \n\
+          ----------------------------------------------------\n\
+             wil has reserved some storage :>                 \n\
+          ----------------------------------------------------\n\");
+
+	while(42) {
+		printf("Input command: ");
+		ret = 1;
+		fgets(&buffer, 20, stdin);
+		if(!strncmp(buffer, "store", 5))
+			ret = store_number(tab);
+		else if(!strncmp(buffer, "read", 4))
+			ret = read_number(tab);
+		else if(!strncmp(buffer, "quit", 4))
+			break;
+		res ? printf("Failed to do %s command\n", buffer) : printf("Completed %s command successfully\n", buffer);
+		bzero(buffer, 20);
+}
