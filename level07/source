@@ -10,7 +10,7 @@ void	clear_stdin(void)
 
 int		get_unum(void)
 {
-	unsigned int input;
+	unsigned int input = 0;
 
 	fflush(stdout);
 	scanf("%u", &input);
@@ -48,8 +48,8 @@ int		store_number(unsigned int *tab) {
 int		main(int ac, char **av, char **env)
 {
 	int ret = 0;
-	char buffer[20];
-	unsigned int tab[100] = 0;
+	char buffer[20] = {0};
+	unsigned int tab[100] = {0};
 
 	while(*av){
 		memset(*av, 0, strlen(*av));
@@ -60,15 +60,15 @@ int		main(int ac, char **av, char **env)
 		env++;
 	}
 	puts("----------------------------------------------------\n\
-		    Welcome to wil's crappy number storage service!   \n\
-          ----------------------------------------------------\n\
-           Commands:                                          \n\
-              store - store a number into the data storage    \n\
-              read  - read a number from the data storage     \n\
-              quit  - exit the program                        \n\
-          ----------------------------------------------------\n\
-             wil has reserved some storage :>                 \n\
-          ----------------------------------------------------\n\");
+		Welcome to wil's crappy number storage service!   \n\
+              ----------------------------------------------------\n\
+               Commands:                                          \n\
+              	  store - store a number into the data storage    \n\
+              	  read  - read a number from the data storage     \n\
+              	  quit  - exit the program                        \n\
+              ----------------------------------------------------\n\
+             	 wil has reserved some storage :>                 \n\
+              ----------------------------------------------------\n\");
 
 	while(42) {
 		printf("Input command: ");
