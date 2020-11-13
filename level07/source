@@ -10,7 +10,7 @@ void	clear_stdin(void)
 
 int		get_unum(void)
 {
-	unsigned int input;
+	unsigned int input = 0;
 
 	fflush(stdout);
 	scanf("%u", &input);
